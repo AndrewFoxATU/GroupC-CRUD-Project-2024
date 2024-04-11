@@ -1,4 +1,4 @@
-package ie.atu.jdbc.standard;
+package ie.atu;
 import java.sql.*;
 
 public class TestConnection {
