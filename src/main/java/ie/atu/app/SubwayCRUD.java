@@ -97,14 +97,20 @@ public class SubwayCRUD implements CRUD {
             stmt.setInt(1, customerID);
             ResultSet resultSet = stmt.executeQuery();
 
-            while (resultSet.next()) {
-                int orderID = resultSet.getInt("OrderID");
-                String orderDate = resultSet.getString("OrderDate");
-                double totalPrice = resultSet.getDouble("TotalPrice");
-                String customerName = resultSet.getString("Name");
-                String email = resultSet.getString("Email");
-                String phone = resultSet.getString("Phone");
-                System.out.println("OrderID: " + orderID + ", Order Date: " + orderDate + ", Total Price: " + totalPrice + ", Customer Name: " + customerName + ", Email: " + email + ", Phone: " + phone);
+            if (!resultSet.next()) {
+                System.out.println("No order found for the given Customer ID.");
+            } else {
+                resultSet.beforeFirst();
+
+                while (resultSet.next()) {
+                    int orderID = resultSet.getInt("OrderID");
+                    String orderDate = resultSet.getString("OrderDate");
+                    double totalPrice = resultSet.getDouble("TotalPrice");
+                    String customerName = resultSet.getString("Name");
+                    String email = resultSet.getString("Email");
+                    String phone = resultSet.getString("Phone");
+                    System.out.println("OrderID: " + orderID + ", Order Date: " + orderDate + ", Total Price: " + totalPrice + ", Customer Name: " + customerName + ", Email: " + email + ", Phone: " + phone);
+                }
             }
         }
     }
@@ -138,18 +144,24 @@ public class SubwayCRUD implements CRUD {
     public void delete(Connection conn) throws SQLException {
         Scanner scanner = new Scanner(System.in);
 
-        System.out.print("Enter Customer ID: ");
-        int customerID = scanner.nextInt();
+        System.out.print("Enter Order ID: ");
+        int orderID = scanner.nextInt();
 
-        String deleteQuery = "DELETE FROM Orders WHERE CustomerID = ?";
-        try (PreparedStatement stmt = conn.prepareStatement(deleteQuery)) {
-            stmt.setInt(1, customerID);
+        String deleteOrderSandwichesQuery = "DELETE FROM OrderSandwiches WHERE OrderID = ?";
+        try (PreparedStatement stmt = conn.prepareStatement(deleteOrderSandwichesQuery)) {
+            stmt.setInt(1, orderID);
+            stmt.executeUpdate();
+        }
+
+        String deleteOrderQuery = "DELETE FROM Orders WHERE OrderID = ?";
+        try (PreparedStatement stmt = conn.prepareStatement(deleteOrderQuery)) {
+            stmt.setInt(1, orderID);
             int rowsDeleted = stmt.executeUpdate();
 
             if (rowsDeleted > 0) {
                 System.out.println("Order deleted successfully.");
             } else {
-                System.out.println("No order found for the given Customer ID.");
+                System.out.println("No order found for the given Order ID.");
             }
         }
     }
