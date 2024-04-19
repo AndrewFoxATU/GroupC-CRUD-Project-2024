@@ -1,40 +1,113 @@
 package ie.atu.app;
 
-import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
+import ie.atu.pool.DatabaseUtils;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Scanner;
 
-public class SubwayCRUD {
+public class SubwayCRUD implements CRUD {
 
-    public static void main(String[] args) {
-        SubwayCRUD subwayCRUD = new SubwayCRUD();
+    @Override
+    public void create(Connection conn) throws SQLException {
+        Scanner scanner = new Scanner(System.in);
+        System.out.print("Enter Total Price: ");
+        double totalPrice = scanner.nextDouble();
+
+        System.out.print("Enter Sandwich ID: ");
+        int sandwichID = scanner.nextInt();
+
+        System.out.print("Enter Quantity: ");
+        int quantity = scanner.nextInt();
+
+        String insertOrderSQL = "INSERT INTO Orders (TotalPrice) VALUES (?)";
+        try (PreparedStatement stmt = conn.prepareStatement(insertOrderSQL, Statement.RETURN_GENERATED_KEYS)) {
+            stmt.setDouble(1, totalPrice);
+            stmt.executeUpdate();
+
+            ResultSet generatedKeys = stmt.getGeneratedKeys();
+            int orderID = -1;
+            if (generatedKeys.next()) {
+                orderID = generatedKeys.getInt(1);
+            }
+
+            String insertOrderSandwichSQL = "INSERT INTO OrderSandwiches (OrderID, SandwichID, Quantity) VALUES (?, ?, ?)";
+            try (PreparedStatement orderSandwichStmt = conn.prepareStatement(insertOrderSandwichSQL)) {
+                orderSandwichStmt.setInt(1, orderID);
+                orderSandwichStmt.setInt(2, sandwichID);
+                orderSandwichStmt.setInt(3, quantity);
+                orderSandwichStmt.executeUpdate();
+            }
+
+            System.out.println("Order created successfully.");
+        }
+    }
+
+    @Override
+    public void read(Connection conn) throws SQLException {
         Scanner scanner = new Scanner(System.in);
 
-        while (true) {
-            System.out.println("Subway CRUD Application");
-            System.out.println("1. Create Order"); // create order by asking for new customer id, name, then date, then price, then what sandwich they ordered
-            System.out.println("2. View Order"); // view order by asking for customer id
-            System.out.println("3. Update Order"); // ask what customer id and what they want updated
-            System.out.println("4. Delete Order"); // delete whole order
-            System.out.println("5. Exit");
-            System.out.print("Enter your choice: ");
-            int choice = scanner.nextInt();
+        System.out.print("Enter Customer ID: ");
+        int customerID = scanner.nextInt();
 
-            switch (choice) {
-                case 1:
+        String query = "SELECT * FROM Orders WHERE CustomerID = ?";
+        try (PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setInt(1, customerID);
+            ResultSet resultSet = stmt.executeQuery();
 
-                case 2:
+            while (resultSet.next()) {
+                int orderID = resultSet.getInt("OrderID");
+                String orderDate = resultSet.getString("OrderDate"); // Assuming OrderDate is stored as a string
+                double totalPrice = resultSet.getDouble("TotalPrice");
+                System.out.println("OrderID: " + orderID + ", Order Date: " + orderDate + ", Total Price: " + totalPrice);
+            }
+        }
+    }
 
-                case 3:
 
-                case 4:
+    @Override
+    public void update(Connection conn) throws SQLException {
+        Scanner scanner = new Scanner(System.in);
 
-                case 5:
-                    System.out.println("Exiting application.");
-                    System.exit(0);
-                default:
-                    System.out.println("Invalid choice. Please enter a number between 1 and 5.");
+        System.out.print("Enter Customer ID: ");
+        int customerID = scanner.nextInt();
+
+        System.out.print("Enter new Total Price: ");
+        double newTotalPrice = scanner.nextDouble();
+
+        String updateQuery = "UPDATE Orders SET TotalPrice = ? WHERE CustomerID = ?";
+        try (PreparedStatement stmt = conn.prepareStatement(updateQuery)) {
+            stmt.setDouble(1, newTotalPrice);
+            stmt.setInt(2, customerID);
+            int rowsUpdated = stmt.executeUpdate();
+
+            if (rowsUpdated > 0) {
+                System.out.println("Order updated successfully.");
+            } else {
+                System.out.println("No order found for the given Customer ID.");
+            }
+        }
+    }
+
+    @Override
+    public void delete(Connection conn) throws SQLException {
+        Scanner scanner = new Scanner(System.in);
+
+        System.out.print("Enter Customer ID: ");
+        int customerID = scanner.nextInt();
+
+        String deleteQuery = "DELETE FROM Orders WHERE CustomerID = ?";
+        try (PreparedStatement stmt = conn.prepareStatement(deleteQuery)) {
+            stmt.setInt(1, customerID);
+            int rowsDeleted = stmt.executeUpdate();
+
+            if (rowsDeleted > 0) {
+                System.out.println("Order deleted successfully.");
+            } else {
+                System.out.println("No order found for the given Customer ID.");
             }
         }
     }

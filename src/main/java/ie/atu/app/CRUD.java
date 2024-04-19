@@ -1,6 +1,8 @@
+// CRUD.java
 package ie.atu.app;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.SQLException;
 
 public interface CRUD {
     void create(Connection conn) throws SQLException;
