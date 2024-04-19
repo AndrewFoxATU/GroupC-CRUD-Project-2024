@@ -1,3 +1,4 @@
+
 -- Drop database if exists
 CREATE DATABASE IF NOT EXISTS SubwayDatabase;
 
