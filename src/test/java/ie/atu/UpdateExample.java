@@ -1,4 +1,6 @@
-package ie.atu.pool;
+package ie.atu;
+
+import ie.atu.pool.DatabaseUtils;
 
 import java.sql.*;
 
