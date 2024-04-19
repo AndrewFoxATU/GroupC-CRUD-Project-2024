@@ -14,37 +14,76 @@ public class SubwayCRUD implements CRUD {
     @Override
     public void create(Connection conn) throws SQLException {
         Scanner scanner = new Scanner(System.in);
-        System.out.print("Enter Total Price: ");
-        double totalPrice = scanner.nextDouble();
 
+        // Prompt for customer details
+        System.out.print("Enter Customer Name: ");
+        String name = scanner.nextLine();
+        System.out.print("Enter Customer Email: ");
+        String email = scanner.nextLine();
+        System.out.print("Enter Customer Phone: ");
+        String phone = scanner.nextLine();
+
+        // Prompt for order details
         System.out.print("Enter Sandwich ID: ");
         int sandwichID = scanner.nextInt();
+        System.out.print("Enter Order Date (YYYY-MM-DD): ");
+        String orderDate = scanner.next();
 
-        System.out.print("Enter Quantity: ");
-        int quantity = scanner.nextInt();
+        // Calculate TotalPrice based on Sandwich Price
+        double totalPrice = 0.0;
+        String totalPriceQuery = "SELECT Price FROM Sandwiches WHERE SandwichID = ?";
+        try (PreparedStatement priceStmt = conn.prepareStatement(totalPriceQuery)) {
+            priceStmt.setInt(1, sandwichID);
+            ResultSet priceResultSet = priceStmt.executeQuery();
+            if (priceResultSet.next()) {
+                totalPrice = priceResultSet.getDouble("Price");
+            } else {
+                System.out.println("Invalid Sandwich ID.");
+                return;
+            }
+        }
 
-        String insertOrderSQL = "INSERT INTO Orders (TotalPrice) VALUES (?)";
-        try (PreparedStatement stmt = conn.prepareStatement(insertOrderSQL, Statement.RETURN_GENERATED_KEYS)) {
-            stmt.setDouble(1, totalPrice);
-            stmt.executeUpdate();
+        // Insert customer details
+        String insertCustomerSQL = "INSERT INTO Customers (Name, Email, Phone) VALUES (?, ?, ?)";
+        try (PreparedStatement customerStmt = conn.prepareStatement(insertCustomerSQL, Statement.RETURN_GENERATED_KEYS)) {
+            customerStmt.setString(1, name);
+            customerStmt.setString(2, email);
+            customerStmt.setString(3, phone);
+            customerStmt.executeUpdate();
 
-            ResultSet generatedKeys = stmt.getGeneratedKeys();
-            int orderID = -1;
+            ResultSet generatedKeys = customerStmt.getGeneratedKeys();
+            int customerID = -1;
             if (generatedKeys.next()) {
-                orderID = generatedKeys.getInt(1);
+                customerID = generatedKeys.getInt(1);
             }
 
-            String insertOrderSandwichSQL = "INSERT INTO OrderSandwiches (OrderID, SandwichID, Quantity) VALUES (?, ?, ?)";
-            try (PreparedStatement orderSandwichStmt = conn.prepareStatement(insertOrderSandwichSQL)) {
-                orderSandwichStmt.setInt(1, orderID);
-                orderSandwichStmt.setInt(2, sandwichID);
-                orderSandwichStmt.setInt(3, quantity);
-                orderSandwichStmt.executeUpdate();
-            }
+            // Insert order details
+            String insertOrderSQL = "INSERT INTO Orders (CustomerID, OrderDate, TotalPrice) VALUES (?, ?, ?)";
+            try (PreparedStatement orderStmt = conn.prepareStatement(insertOrderSQL, Statement.RETURN_GENERATED_KEYS)) {
+                orderStmt.setInt(1, customerID);
+                orderStmt.setString(2, orderDate);
+                orderStmt.setDouble(3, totalPrice);
+                orderStmt.executeUpdate();
 
-            System.out.println("Order created successfully.");
+                ResultSet orderGeneratedKeys = orderStmt.getGeneratedKeys();
+                int orderID = -1;
+                if (orderGeneratedKeys.next()) {
+                    orderID = orderGeneratedKeys.getInt(1);
+                }
+
+                // Insert order sandwich details
+                String insertOrderSandwichSQL = "INSERT INTO OrderSandwiches (OrderID, SandwichID, Quantity) VALUES (?, ?, 1)";
+                try (PreparedStatement orderSandwichStmt = conn.prepareStatement(insertOrderSandwichSQL)) {
+                    orderSandwichStmt.setInt(1, orderID);
+                    orderSandwichStmt.setInt(2, sandwichID);
+                    orderSandwichStmt.executeUpdate();
+                }
+
+                System.out.println("Order created successfully.");
+            }
         }
     }
+
 
     @Override
     public void read(Connection conn) throws SQLException {
@@ -53,16 +92,19 @@ public class SubwayCRUD implements CRUD {
         System.out.print("Enter Customer ID: ");
         int customerID = scanner.nextInt();
 
-        String query = "SELECT * FROM Orders WHERE CustomerID = ?";
+        String query = "SELECT * FROM Orders o JOIN Customers c ON o.CustomerID = c.CustomerID WHERE c.CustomerID = ?";
         try (PreparedStatement stmt = conn.prepareStatement(query)) {
             stmt.setInt(1, customerID);
             ResultSet resultSet = stmt.executeQuery();
 
             while (resultSet.next()) {
                 int orderID = resultSet.getInt("OrderID");
-                String orderDate = resultSet.getString("OrderDate"); // Assuming OrderDate is stored as a string
+                String orderDate = resultSet.getString("OrderDate");
                 double totalPrice = resultSet.getDouble("TotalPrice");
-                System.out.println("OrderID: " + orderID + ", Order Date: " + orderDate + ", Total Price: " + totalPrice);
+                String customerName = resultSet.getString("Name");
+                String email = resultSet.getString("Email");
+                String phone = resultSet.getString("Phone");
+                System.out.println("OrderID: " + orderID + ", Order Date: " + orderDate + ", Total Price: " + totalPrice + ", Customer Name: " + customerName + ", Email: " + email + ", Phone: " + phone);
             }
         }
     }

@@ -25,7 +25,7 @@ CREATE TABLE Sandwiches (
 CREATE TABLE Orders (
     OrderID INT AUTO_INCREMENT PRIMARY KEY,
     CustomerID INT,
-    OrderDate DATE,
+    OrderDate VARCHAR(10),
     TotalPrice DECIMAL(10, 2),
     FOREIGN KEY (CustomerID) REFERENCES Customers(CustomerID)
 );
