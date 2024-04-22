@@ -1,6 +1,12 @@
 
 -- Drop database if exists
-CREATE DATABASE IF NOT EXISTS SubwayDatabase;
+DROP DATABASE IF EXISTS SubwayDatabase;
+
+-- Create database
+CREATE DATABASE SubwayDatabase;
+
+-- Drop database if exists
+-- CREATE DATABASE IF NOT EXISTS SubwayDatabase;
 
 -- Use the newly created database
 USE SubwayDatabase;

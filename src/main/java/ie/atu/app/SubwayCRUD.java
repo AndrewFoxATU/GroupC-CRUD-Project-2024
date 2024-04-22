@@ -79,27 +79,27 @@ public class SubwayCRUD implements CRUD {
                     orderSandwichStmt.executeUpdate();
                 }
 
-                System.out.println("Order created successfully.");
+                System.out.println("Order created successfully. Order ID: " + orderID);
             }
         }
     }
 
 
-    @Override
     public void read(Connection conn) throws SQLException {
         Scanner scanner = new Scanner(System.in);
 
-        System.out.print("Enter Customer ID: ");
+        System.out.print("Enter Order ID: ");
         int customerID = scanner.nextInt();
 
         String query = "SELECT * FROM Orders o JOIN Customers c ON o.CustomerID = c.CustomerID WHERE c.CustomerID = ?";
-        try (PreparedStatement stmt = conn.prepareStatement(query)) {
+        try (PreparedStatement stmt = conn.prepareStatement(query, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY)) {
             stmt.setInt(1, customerID);
             ResultSet resultSet = stmt.executeQuery();
 
             if (!resultSet.next()) {
                 System.out.println("No order found for the given Customer ID.");
             } else {
+                // Move the cursor to before the first row to allow backward iteration
                 resultSet.beforeFirst();
 
                 while (resultSet.next()) {
@@ -120,7 +120,7 @@ public class SubwayCRUD implements CRUD {
     public void update(Connection conn) throws SQLException {
         Scanner scanner = new Scanner(System.in);
 
-        System.out.print("Enter Customer ID: ");
+        System.out.print("Enter Order ID: ");
         int customerID = scanner.nextInt();
 
         System.out.print("Enter new Total Price: ");
